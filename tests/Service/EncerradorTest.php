@@ -7,59 +7,27 @@ use Alura\Leilao\Dao\Leilao as LeilaoDao;
 use Alura\Leilao\Service\Encerrador;
 use PHPUnit\Framework\TestCase;
 
-class LeilaoDaoMock extends LeilaoDao
-{
-    private array $leiloes = [];
-
-    public function salva(Leilao $leilao): void
-    {
-        $this->leiloes[] = $leilao;
-    }
-
-    public function recuperarNaoFinalizados(): array
-    {
-        return array_filter(
-            $this->leiloes,
-            fn(Leilao $leilao) => !$leilao->estaFinalizado()
-        );
-    }
-
-    public function recuperarFinalizados(): array
-    {
-        return array_filter(
-            $this->leiloes,
-            fn(Leilao $leilao) => $leilao->estaFinalizado()
-        );
-    }
-
-    public function atualiza(Leilao $leilao)
-    {
-    }
-}
-
 class EncerradorTest extends TestCase
 {
     public function test_deve_encerrar_leiloes_com_mais_de_uma_semana()
     {
         $leilaoFiat = new Leilao('Fiat 147 0Km', new \DateTimeImmutable('8 days ago'));
         $leilaoVariant = new Leilao('Variant 1973 0Km', new \DateTimeImmutable('10 days ago'));
-
-        $leilaoDaoMock = new LeilaoDaoMock();
-        $leilaoDaoMock->salva($leilaoFiat);
-        $leilaoDaoMock->salva($leilaoVariant);
+        $leilaoDaoMock = $this->createMock(LeilaoDao::class);
+        $leilaoDaoMock->method('recuperarNaoFinalizados')
+            ->willReturn([$leilaoFiat, $leilaoVariant]);
+        $leilaoDaoMock->expects($this->exactly(2))
+            ->method('atualiza')
+            ->withConsecutive([$leilaoFiat], [$leilaoVariant]);
+        $leilaoDaoMock->method('recuperarFinalizados')
+            ->willReturn([$leilaoFiat, $leilaoVariant]);
 
         $encerrador = new Encerrador($leilaoDaoMock);
         $encerrador->encerra();
 
-        $leiloesEncerrados = $leilaoDaoMock->recuperarFinalizados();
-        $this->assertCount(2, $leiloesEncerrados);
-        $this->assertEquals(
-            'Fiat 147 0Km',
-            $leiloesEncerrados[0]->recuperarDescricao()
-        );
-        $this->assertEquals(
-            'Variant 1973 0Km',
-            $leiloesEncerrados[1]->recuperarDescricao()
-        );
+        $leiloes = [$leilaoFiat, $leilaoVariant];
+        $this->assertCount(2, $leiloes);
+        $this->assertTrue($leiloes[0]->estaFinalizado());
+        $this->assertTrue($leiloes[1]->estaFinalizado());
     }
 }
