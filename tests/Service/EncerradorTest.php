@@ -62,6 +62,7 @@ class EncerradorTest extends TestCase
         $this->enviadorDeEmailMock->expects($this->exactly(2))
             ->method('notificaTerminoLeilao')
             ->willThrowException($exception);
+
         $this->encerrador->encerra();
     }
 
