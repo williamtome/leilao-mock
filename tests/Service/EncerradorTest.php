@@ -18,16 +18,31 @@ class EncerradorTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->leilaoFiat = new Leilao('Fiat 147 0Km', new \DateTimeImmutable('8 days ago'));
-        $this->leilaoVariant = new Leilao('Variant 1973 0Km', new \DateTimeImmutable('10 days ago'));
+        $this->leilaoFiat = new Leilao(
+            'Fiat 147 0Km',
+            new \DateTimeImmutable('8 days ago')
+        );
+        $this->leilaoVariant = new Leilao(
+            'Variant 1973 0Km',
+            new \DateTimeImmutable('10 days ago')
+        );
         $leilaoDaoMock = $this->createMock(LeilaoDao::class);
         $leilaoDaoMock->method('recuperarNaoFinalizados')
-            ->willReturn([$this->leilaoFiat, $this->leilaoVariant]);
+            ->willReturn([
+                $this->leilaoFiat,
+                $this->leilaoVariant
+            ]);
         $leilaoDaoMock->expects($this->exactly(2))
             ->method('atualiza')
-            ->withConsecutive([$this->leilaoFiat], [$this->leilaoVariant]);
+            ->withConsecutive(
+                [$this->leilaoFiat],
+                [$this->leilaoVariant]
+            );
         $leilaoDaoMock->method('recuperarFinalizados')
-            ->willReturn([$this->leilaoFiat, $this->leilaoVariant]);
+            ->willReturn([
+                $this->leilaoFiat,
+                $this->leilaoVariant
+            ]);
         $this->enviadorDeEmailMock = $this->createMock(EnviadorEmail::class);
         $this->encerrador = new Encerrador($leilaoDaoMock, $this->enviadorDeEmailMock);
     }
